@@ -9,7 +9,7 @@ async function bootstrap() {
   app.enableCors();
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,
+      whitelist: true, // clear all data not declare in dto WITH DECORATORS RULES
     }),
   );
 

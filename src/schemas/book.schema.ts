@@ -1,4 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { schemaOptions } from 'src/configs/schema.config';
 
 export enum Category {
   ADVENTURE = 'Adventure',
@@ -7,7 +8,7 @@ export enum Category {
   FANTASY = 'Fantasy',
 }
 
-@Schema({ timestamps: true })
+@Schema(schemaOptions)
 export class Book {
   @Prop()
   title: string;
