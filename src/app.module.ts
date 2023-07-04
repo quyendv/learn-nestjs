@@ -4,6 +4,10 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { BookModule } from './books/book.module';
 
 @Module({
-  imports: [ConfigModule.forRoot(), MongooseModule.forRoot(process.env.MONGODB_URL), BookModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    MongooseModule.forRoot(process.env.MONGODB_URL),
+    BookModule,
+  ],
 })
 export class AppModule {}
