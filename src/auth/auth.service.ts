@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as argon from 'argon2';
 import { Model } from 'mongoose';
@@ -7,7 +8,10 @@ import { UserDto } from './dto/user.dto';
 
 @Injectable()
 export class AuthService {
-  constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {}
+  constructor(
+    @InjectModel(User.name) private readonly userModel: Model<User>,
+    private readonly jwtService: JwtService,
+  ) {}
 
   async login(userDto: UserDto) {
     try {
@@ -18,11 +22,13 @@ export class AuthService {
       if (!validPasswd) return new BadRequestException('Password is incorrect');
 
       console.log(checkExisted);
-      // jwt
 
-      return 'The login has been success';
+      return {
+        message: 'The login has been success',
+        accessToken: await this.convertToJwtString(checkExisted.id, checkExisted.email),
+      };
     } catch (error) {
-      return new InternalServerErrorException(error);
+      return new InternalServerErrorException(error); // FIXME: ISE is always catch from Exception Filter Layer
     }
   }
 
@@ -41,9 +47,21 @@ export class AuthService {
 
       // jwt
 
-      return 'The registration has been successful';
+      return this;
     } catch (error) {
-      return new InternalServerErrorException(error);
+      return new InternalServerErrorException(error); // FIXME: ISE is always catch from Exception Filter Layer
     }
+  }
+
+  async convertToJwtString(userId: number, email: string): Promise<string> {
+    const payload = {
+      sub: userId, // Subject: whom the token refers to
+      email,
+    };
+
+    return await this.jwtService.signAsync(payload, {
+      expiresIn: '10m',
+      secret: process.env.JWT_SECRET,
+    });
   }
 }
