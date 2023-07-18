@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import * as argon from 'argon2';
@@ -14,43 +14,36 @@ export class AuthService {
   ) {}
 
   async login(userDto: UserDto) {
-    try {
-      const checkExisted = await this.userModel.findOne({ email: userDto.email });
-      if (!checkExisted) return new BadRequestException("User doesn't exist");
+    const checkExisted = await this.userModel.findOne({ email: userDto.email });
+    if (!checkExisted) throw new BadRequestException("User doesn't exist");
 
-      const validPasswd = await argon.verify(checkExisted.password, userDto.password);
-      if (!validPasswd) return new BadRequestException('Password is incorrect');
+    const validPasswd = await argon.verify(checkExisted.password, userDto.password);
+    if (!validPasswd) throw new BadRequestException('Password is incorrect');
 
-      console.log(checkExisted);
+    console.log(checkExisted);
 
-      return {
-        message: 'The login has been success',
-        accessToken: await this.convertToJwtString(checkExisted.id, checkExisted.email),
-      };
-    } catch (error) {
-      return new InternalServerErrorException(error); // FIXME: ISE is always catch from Exception Filter Layer
-    }
+    return {
+      message: 'The login has been success',
+      accessToken: await this.convertToJwtString(checkExisted.id, checkExisted.email),
+    };
   }
 
   async register(userDto: UserDto) {
-    try {
-      // console.log(userDto);
-      const checkExisted = await this.userModel.findOne({ email: userDto.email });
-      if (checkExisted) return new BadRequestException('Email already used');
+    // console.log(userDto);
+    const checkExisted = await this.userModel.findOne({ email: userDto.email });
+    if (checkExisted) throw new BadRequestException('Email already used');
 
-      const newUser = new this.userModel({
-        ...userDto,
-        password: await argon.hash(userDto.password),
-      });
-      await newUser.save();
-      console.log(newUser);
+    const newUser = new this.userModel({
+      ...userDto,
+      password: await argon.hash(userDto.password),
+    });
+    await newUser.save();
+    console.log(newUser);
 
-      // jwt
-
-      return this;
-    } catch (error) {
-      return new InternalServerErrorException(error); // FIXME: ISE is always catch from Exception Filter Layer
-    }
+    return {
+      message: 'The registration has been success',
+      accessToken: await this.convertToJwtString(newUser.id, newUser.email),
+    };
   }
 
   async convertToJwtString(userId: number, email: string): Promise<string> {

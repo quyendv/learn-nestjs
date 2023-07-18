@@ -37,3 +37,4 @@ lerna-debug.log*
 # Local test api
 *.http
 *.rest
+.env
